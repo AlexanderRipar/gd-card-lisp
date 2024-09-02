@@ -1,3 +1,6 @@
+# Card Interpreter by Alexander Ripar:
+# https://github.com/AlexanderRipar/gd-card-lisp
+
 class_name ScriptInterpreter
 extends Node
 
@@ -18,7 +21,7 @@ class ScriptNode:
 
 	func evaluate(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
 		assert(args.size() == self.arg_count or self.arg_count == -1, "Expected " + str(self.arg_count) + " arguments but got " + str(args.size()))
-		return evaluate_impl(args, env)
+		return await evaluate_impl(args, env)
 
 	func evaluate_impl(_args: Array[ScriptNode], _env: ScriptEnvironment) -> Variant:
 		assert(false, "Called abstract function ScriptNode.evaluate_impl")
@@ -37,7 +40,7 @@ class _ScriptNodeExternal extends ScriptNode:
 		return node
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
-		return function.call(args, env)
+		return await function.call(args, env)
 
 
 class _ScriptNodeTree extends ScriptNode:
@@ -52,10 +55,10 @@ class _ScriptNodeTree extends ScriptNode:
 		if subtrees.size() == 0:
 			return null
 		else:
-			return subtrees[0].evaluate_self(env).evaluate(subtrees.slice(1), env)
+			return await subtrees[0].evaluate_self(env).evaluate(subtrees.slice(1), env)
 
 	func evaluate_self(env: ScriptEnvironment) -> Variant:
-		return evaluate_impl([], env)
+		return await evaluate_impl([], env)
 
 
 class _ScriptNodeSelf extends ScriptNode:
@@ -71,10 +74,10 @@ class _ScriptNodeIf extends ScriptNode:
 		return _ScriptNodeIf.new().init_helper(3)
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
-		if args[0].evaluate([], env) != 0:
-			return args[1].evaluate([], env)
+		if await args[0].evaluate([], env) != 0:
+			return await args[1].evaluate([], env)
 		else:
-			return args[2].evaluate([], env)
+			return await args[2].evaluate([], env)
 
 
 class _ScriptNodeList extends ScriptNode:
@@ -84,7 +87,7 @@ class _ScriptNodeList extends ScriptNode:
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
 		var result = []
 		for arg in args:
-			result.push_back(arg.evaluate([], env))
+			result.push_back(await arg.evaluate([], env))
 		return result
 
 
@@ -94,7 +97,7 @@ class _ScriptNodeSet extends ScriptNode:
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
 		var variable_ref = args[0].evaluate_self(env)
-		return variable_ref.set_value(env, args[1].evaluate([], env))
+		return variable_ref.set_value(env, await args[1].evaluate([], env))
 
 
 class _ScriptNodeGetAndSet extends ScriptNode:
@@ -163,7 +166,7 @@ class _ScriptNodeCompEqual extends ScriptNode:
 		return _ScriptNodeCompEqual.new().init_helper(2)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) == args[1].evaluate([], env)
+		return await args[0].evaluate([], env) == await args[1].evaluate([], env)
 
 
 class _ScriptNodeCompNotEqual extends ScriptNode:
@@ -171,7 +174,7 @@ class _ScriptNodeCompNotEqual extends ScriptNode:
 		return _ScriptNodeCompNotEqual.new().init_helper(2)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) != args[1].evaluate([], env)
+		return await args[0].evaluate([], env) != await args[1].evaluate([], env)
 
 
 class _ScriptNodeCompLessThan extends ScriptNode:
@@ -179,7 +182,7 @@ class _ScriptNodeCompLessThan extends ScriptNode:
 		return _ScriptNodeCompLessThan.new().init_helper(2)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) < args[1].evaluate([], env)
+		return await args[0].evaluate([], env) < await args[1].evaluate([], env)
 
 
 class _ScriptNodeCompLessThanOrEqual extends ScriptNode:
@@ -187,7 +190,7 @@ class _ScriptNodeCompLessThanOrEqual extends ScriptNode:
 		return _ScriptNodeCompLessThanOrEqual.new().init_helper(2)
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) >= args[1].evaluate([], env)
+		return await args[0].evaluate([], env) >= await args[1].evaluate([], env)
 
 
 class _ScriptNodeCompGreaterThan extends ScriptNode:
@@ -195,7 +198,7 @@ class _ScriptNodeCompGreaterThan extends ScriptNode:
 		return _ScriptNodeCompGreaterThan.new().init_helper(2)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) > args[1].evaluate([], env)
+		return await args[0].evaluate([], env) > await args[1].evaluate([], env)
 
 
 class _ScriptNodeCompGreaterThanOrEqual extends ScriptNode:
@@ -203,7 +206,7 @@ class _ScriptNodeCompGreaterThanOrEqual extends ScriptNode:
 		return _ScriptNodeCompGreaterThanOrEqual.new().init_helper(2)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return args[0].evaluate([], env) >= args[1].evaluate([], env)
+		return await args[0].evaluate([], env) >= await args[1].evaluate([], env)
 
 
 class _ScriptNodeNot extends ScriptNode:
@@ -211,7 +214,7 @@ class _ScriptNodeNot extends ScriptNode:
 		return _ScriptNodeAnd.new().init_helper(1)
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
-		return not args[0].evaluate([], env)
+		return not await args[0].evaluate([], env)
 
 
 class _ScriptNodeAnd extends ScriptNode:
@@ -220,7 +223,7 @@ class _ScriptNodeAnd extends ScriptNode:
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
 		for arg in args:
-			if not arg.evaluate([], env):
+			if not await arg.evaluate([], env):
 				return false
 		return true
 
@@ -231,7 +234,7 @@ class _ScriptNodeOr extends ScriptNode:
 		
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> bool:
 		for arg in args:
-			if arg.evaluate([], env):
+			if await arg.evaluate([], env):
 				return true
 		return false
 
@@ -241,12 +244,12 @@ class _ScriptNodeAdd extends ScriptNode:
 		return _ScriptNodeAdd.new().init_helper(2)
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> Variant:
-		var first_arg = args[0].evaluate([], env)
+		var first_arg = await args[0].evaluate([], env)
 		if first_arg is Array:
 			var result: Array = first_arg.duplicate()
-			result.append_array(args[1].evaluate([], env))
+			result.append_array(await args[1].evaluate([], env))
 			return result
-		return first_arg + args[1].evaluate([], env)
+		return first_arg + await args[1].evaluate([], env)
 
 
 class _ScriptNodeSub extends ScriptNode:
@@ -254,7 +257,7 @@ class _ScriptNodeSub extends ScriptNode:
 		return _ScriptNodeSub.new().init_helper(2)
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> int:
-		return args[0].evaluate([], env) - args[1].evaluate([], env)
+		return await args[0].evaluate([], env) - await args[1].evaluate([], env)
 
 
 class _ScriptNodeMul extends ScriptNode:
@@ -262,7 +265,7 @@ class _ScriptNodeMul extends ScriptNode:
 		return _ScriptNodeMul.new().init_helper(2)
 
 	func evaluate_impl(args: Array[ScriptNode], env: ScriptEnvironment) -> int:
-		return args[0].evaluate([], env) * args[1].evaluate([], env)
+		return await args[0].evaluate([], env) * await args[1].evaluate([], env)
 
 
 class CustomOperator:

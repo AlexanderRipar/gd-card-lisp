@@ -138,7 +138,7 @@ type
   arguments.
 
 
-# User-Defined Operators
+## User-Defined Operators
 
 It is likely that your scripts will want to interact with your game beyond just
 reading or modifying Dictionaries with a few basic types.
@@ -185,3 +185,14 @@ the following script node could be used to increment my_integer by 5:
 ```
 (inc (+ 2 3))
 ```
+
+
+
+# Why is Everything a Coroutine?
+
+Since `ScriptNode.evaluate` contains an `await`, Godot recognises it as a
+coroutine. This means that, to use its result, you must await it as well.
+
+While this is quite verbose in places, it allows easily implementing
+user-defined operators that prompt the player for input, which would otherwise
+be practically impossible.
